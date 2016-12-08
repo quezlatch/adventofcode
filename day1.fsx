@@ -26,23 +26,21 @@ module Distance =
             | West -> South
         | _ -> failwith "can only turn left or right"
 
-    let rec calc heading (x,y) (dirs: string list) =
-        match dirs with
-        | head::tail ->
-            let newHeading = head.[0] |> turn heading
-            let steps = head.Substring(1) |> Int32.Parse
-            let newCoord =
-                match newHeading with
-                    | North -> (x,y+steps)
-                    | East -> (x+steps,y)
-                    | South -> (x,y-steps)
-                    | West -> (x-steps,y)
-            calc newHeading newCoord tail
-        | [] -> (x,y)
+    let calc (heading,x,y) (dir: string) =
+        let newHeading = dir.[0] |> turn heading
+        let steps = dir.Substring(1) |> Int32.Parse
+        let nx, ny =
+            match newHeading with
+                | North -> (x,y+steps)
+                | East -> (x+steps,y)
+                | South -> (x,y-steps)
+                | West -> (x-steps,y)
+        (newHeading, nx, ny)
 
     let getCoord (i:string) = 
-        let dirs = i.Split([|',';' '|], StringSplitOptions.RemoveEmptyEntries) |> Array.toList       
-        calc North (0,0) dirs
+        let _,x,y = i.Split([|',';' '|], StringSplitOptions.RemoveEmptyEntries) 
+                    |> Seq.scan calc (North,0,0) |> Seq.last
+        (x,y)
 
     let calculate instructions = 
         let x,y = getCoord instructions
