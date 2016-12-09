@@ -9,7 +9,6 @@ module Distance =
     | South = 2
     | West = 3
 
-    //lookup would be better. or cycle through a proper enum...
     let turn heading leftRight =
         let offset =
             match leftRight with
