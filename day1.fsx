@@ -4,27 +4,19 @@ module Distance =
     open System
 
     type Direction =
-    | North
-    | East
-    | South
-    | West
+    | North = 0
+    | East = 1
+    | South = 2
+    | West = 3
 
     //lookup would be better. or cycle through a proper enum...
     let turn heading leftRight =
-        match leftRight with
-        | 'R' ->
-            match heading with
-            | North -> East
-            | East -> South
-            | South -> West
-            | West -> North
-        | 'L' ->
-            match heading with
-            | North -> West
-            | East -> North
-            | South -> East
-            | West -> South
-        | _ -> failwith "can only turn left or right"
+        let offset =
+            match leftRight with
+            | 'R' -> 1
+            | 'L' -> 3
+            | _ -> failwith "can only turn left or right"
+        (int heading |> (+) offset) % 4 |> enum<Direction> 
 
     let rec calc heading (x,y) (dirs: string list) =
         seq {
@@ -34,10 +26,11 @@ module Distance =
                 let steps = head.Substring(1) |> Int32.Parse
                 let makeNewCoords =
                     match newHeading with
-                        | North -> fun i -> (x,y+i)
-                        | East -> fun i -> (x+i,y)
-                        | South -> fun i -> (x,y-i)
-                        | West -> fun i -> (x-i,y)
+                        | Direction.North -> fun i -> (x,y+i)
+                        | Direction.East -> fun i -> (x+i,y)
+                        | Direction.South -> fun i -> (x,y-i)
+                        | Direction.West -> fun i -> (x-i,y)
+                        | _ -> failwith "bad direction"
                 let newCoords = [ for i in 1..steps -> makeNewCoords i ]
                 yield! newCoords
                 yield! calc newHeading (Seq.last newCoords) tail
@@ -47,7 +40,7 @@ module Distance =
     let getCoord (i:string) = 
         let coords = i.Split([|',';' '|], StringSplitOptions.RemoveEmptyEntries) 
                     |> Array.toList
-                    |> calc North (0,0)
+                    |> calc Direction.North (0,0)
                     |> Seq.cache
         let grouped = coords |> Seq.groupBy id |> Map.ofSeq
         let isDuplicate c = Map.find c grouped |> Seq.length  > 1
