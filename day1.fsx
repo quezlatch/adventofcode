@@ -26,21 +26,33 @@ module Distance =
             | West -> South
         | _ -> failwith "can only turn left or right"
 
-    let calc (heading,x,y) (dir: string) =
-        let newHeading = dir.[0] |> turn heading
-        let steps = dir.Substring(1) |> Int32.Parse
-        let nx, ny =
-            match newHeading with
-                | North -> (x,y+steps)
-                | East -> (x+steps,y)
-                | South -> (x,y-steps)
-                | West -> (x-steps,y)
-        (newHeading, nx, ny)
+    let rec calc heading (x,y) (dirs: string list) =
+        seq {
+            match dirs with
+            | head::tail ->
+                let newHeading = head.[0] |> turn heading
+                let steps = head.Substring(1) |> Int32.Parse
+                let newCoords =
+                    match newHeading with
+                        | North -> [ for i in 1..steps -> (x,y+i) ]
+                        | East -> [ for i in 1..steps -> (x+i,y) ]
+                        | South -> [ for i in 1..steps -> (x,y-i) ]
+                        | West -> [ for i in 1..steps -> (x-i,y) ]
+                yield! newCoords
+                yield! calc newHeading (Seq.last newCoords) tail
+            | [] -> ()
+        }
 
     let getCoord (i:string) = 
-        let _,x,y = i.Split([|',';' '|], StringSplitOptions.RemoveEmptyEntries) 
-                    |> Seq.scan calc (North,0,0) |> Seq.last
-        (x,y)
+        let coords = i.Split([|',';' '|], StringSplitOptions.RemoveEmptyEntries) 
+                    |> Array.toList
+                    |> calc North (0,0)
+                    |> Seq.cache
+        let grouped = coords |> Seq.groupBy id |> Map.ofSeq
+        let isDuplicate c = Map.find c grouped |> Seq.length  > 1
+        match coords |> Seq.tryFind isDuplicate with
+        | Some xy -> xy
+        | None -> Seq.last coords
 
     let calculate instructions = 
         let x,y = getCoord instructions
@@ -58,6 +70,7 @@ open Fuchu
     |> Seq.map (fun (instructions,distance) -> 
         testCase instructions (fun _ -> Assert.Equal("d", distance, Distance.calculate instructions)))
     |> testList "get distance"
+    testCase "get distance with repeated locations" (fun _ -> Assert.Equal("", 4, (Distance.calculate "R8, R4, R4, R8")))
 ]
 |> testList "day 1 tests"
 |> run 
