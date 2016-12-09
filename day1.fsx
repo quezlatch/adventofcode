@@ -32,12 +32,13 @@ module Distance =
             | head::tail ->
                 let newHeading = head.[0] |> turn heading
                 let steps = head.Substring(1) |> Int32.Parse
-                let newCoords =
+                let makeNewCoords =
                     match newHeading with
-                        | North -> [ for i in 1..steps -> (x,y+i) ]
-                        | East -> [ for i in 1..steps -> (x+i,y) ]
-                        | South -> [ for i in 1..steps -> (x,y-i) ]
-                        | West -> [ for i in 1..steps -> (x-i,y) ]
+                        | North -> fun i -> (x,y+i)
+                        | East -> fun i -> (x+i,y)
+                        | South -> fun i -> (x,y-i)
+                        | West -> fun i -> (x-i,y)
+                let newCoords = [ for i in 1..steps -> makeNewCoords i ]
                 yield! newCoords
                 yield! calc newHeading (Seq.last newCoords) tail
             | [] -> ()
