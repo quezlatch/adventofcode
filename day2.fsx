@@ -3,22 +3,39 @@
 module BathroomKeypad =
     open System
 
-    let private keypad = array2D [ ['1';'2';'3'] ; ['4';'5';'6'] ; ['7';'8';'9']]
+    let private keypad = 
+        [
+            "  1  "
+            " 234 "
+            "56789"
+            " ABC "
+            "  D  "
+        ] |> array2D
 
-    let private centrePoint = (1,1)
-    let private toCharList (s:string) = [for c in s.Trim() -> c]
-    let rec private findDigit (x,y) line = 
+    let private centrePoint = (0,2)
+    let private move c (x,y) =
+        match c with
+            | 'U' -> (x,y-1)
+            | 'D' -> (x,y+1)
+            | 'L' -> (x-1,y)
+            | 'R' -> (x+1,y)
+            | _ -> failwith "Up, down, left, right"
+    let private getKey (x,y) = keypad.[y,x]
+    let private isValid = function
+        | _,y when y < 0 || y >= 5 ->
+            false
+        | x,_ when x < 0 || x >= 5 ->
+            false
+        | xy -> getKey xy <> ' '
+
+    let rec private findDigit xy line = 
         match line with
         | c::tail -> 
-            let newXY =
-                match c with
-                | 'U' -> if y = 0 then (x,y) else (x,y-1)
-                | 'D' -> if y = 2 then (x,y) else (x,y+1)
-                | 'L' -> if x = 0 then (x,y) else (x-1,y)
-                | 'R' -> if x = 2 then (x,y) else (x+1,y)
-                | _ -> failwith "Up, down, left, right"    
-            findDigit newXY tail
-        | [] -> (x,y)
+            let nxy = move c xy
+            findDigit (if isValid nxy then nxy else xy) tail
+        | [] -> xy
+
+    let private toCharList (s:string) = [for c in s.Trim() -> c]
 
     let getAccessCode input =
         input    
@@ -26,7 +43,7 @@ module BathroomKeypad =
         |> Seq.filter (not << List.isEmpty)
         |> Seq.scan findDigit centrePoint
         |> Seq.tail
-        |> Seq.map (fun (x,y) -> keypad.[y,x])
+        |> Seq.map getKey
         |> Seq.toArray
         |> String
 
@@ -41,7 +58,7 @@ let input =
         ""
     ]
 
-testCase "bathroom keypad" (fun _ -> Assert.Equal("", "1985", BathroomKeypad.getAccessCode input))
+testCase "bathroom keypad" (fun _ -> Assert.Equal("", "5DB3", BathroomKeypad.getAccessCode input))
 |> run 
 |> ignore
 
