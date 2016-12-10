@@ -1,3 +1,9 @@
 # Advent Of Code 2016
 
 [adventofcode](http://adventofcode.com)
+
+## Dear diary (observations)
+
+* Day 2 part 1. I'm getting obsessed by lines of code! Also, F# is far more strict about types. C# lulls you
+into a false sense of security by automatically casting for you. Also, Ionide/VSCode is very cool, but the 
+intellisense isn't as all enveloping as VS
